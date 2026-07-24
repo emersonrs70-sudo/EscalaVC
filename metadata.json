@@ -1,0 +1,6 @@
+{
+  "name": "Sistema de Escala 6x2",
+  "description": "Sistema de consulta de horário e escala de trabalho 6x2 para 4 turmas com calendário e cálculo de folgas",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
