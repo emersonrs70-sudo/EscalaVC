@@ -76,7 +76,7 @@ export const TodayShiftSummary: React.FC<TodayShiftSummaryProps> = ({
                   ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60'
                   : `${config.corBg} ${config.corBorder}`
               }`}
-              title={`Clique para filtrar calendário pela Turma ${tId}`}
+              title={`Turma ${tId} (${colabCount} integrantes):\n${tData.colaboradores.map((c) => `• ${c.nome} (${c.cargo})`).join('\n') || 'Nenhum integrante'}\n\nClique para filtrar calendário pela Turma ${tId}`}
             >
               <div className="flex items-center gap-3">
                 <div

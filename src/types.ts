@@ -43,3 +43,21 @@ export interface UserProfile {
   turma: TurmaId;
   modoAnonimo?: boolean;
 }
+
+export interface FeriasPeriodo {
+  id: string;
+  colaboradorId: string;
+  colaboradorNome: string;
+  colaboradorTurma: TurmaId;
+  colaboradorCargo: string;
+  dataInicio: string; // YYYY-MM-DD
+  dataFim: string; // YYYY-MM-DD
+  coberturaColaboradorId: string;
+  coberturaColaboradorNome: string;
+  coberturaTurmaOrigem?: TurmaId | 'EXTERNO' | 'OUTRO_SETOR' | string;
+  coberturaCargo: string;
+  coberturaSetorOrigem?: string;
+  coberturaIsExterno?: boolean;
+  observacoes?: string;
+  status: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA';
+}

@@ -5,12 +5,14 @@ import { PersonalCard } from './components/PersonalCard';
 import { CalendarView } from './components/CalendarView';
 import { DayDetailsModal } from './components/DayDetailsModal';
 import { TeamRosterModal } from './components/TeamRosterModal';
+import { VacationManagementModal } from './components/VacationManagementModal';
 import { NotificationSettings } from './components/NotificationSettings';
 import { TodayShiftSummary } from './components/TodayShiftSummary';
 import { InstallPWAModal } from './components/InstallPWAModal';
-import { Colaborador, UserProfile, TurmaId } from './types';
+import { Colaborador, UserProfile, TurmaId, FeriasPeriodo } from './types';
 import { COLABORADORES } from './data/equipes';
 import { checkAndSendScheduledNotifications } from './utils/notifications';
+import { getSavedFerias, saveFeriasToStorage, updateFeriasListStatus } from './utils/ferias';
 
 export default function App() {
   const today = new Date();
@@ -54,11 +56,12 @@ export default function App() {
       prev.map((c) => (c.id === updated.id ? updated : c))
     );
     // If the currently logged-in user is this collaborator, update their profile state
-    if (user && user.colaboradorId === updated.id) {
+    if (user && (user.colaboradorId === updated.id || (!user.colaboradorId && user.nome === updated.nome))) {
       setUser((prevUser) =>
         prevUser
           ? {
               ...prevUser,
+              colaboradorId: updated.id,
               nome: updated.nome,
               cargo: updated.cargo,
               turma: updated.turma,
@@ -78,11 +81,39 @@ export default function App() {
 
   const handleDeleteColaborador = (id: string) => {
     setColaboradores((prev) => prev.filter((c) => c.id !== id));
+    if (user && user.colaboradorId === id) {
+      setUser(null);
+    }
   };
 
   const handleResetColaboradores = () => {
     setColaboradores(COLABORADORES);
   };
+
+  // Keep logged in user state synchronized with colaboradores
+  useEffect(() => {
+    if (user && user.colaboradorId) {
+      const found = colaboradores.find((c) => c.id === user.colaboradorId);
+      if (found) {
+        if (
+          user.nome !== found.nome ||
+          user.cargo !== found.cargo ||
+          user.turma !== found.turma
+        ) {
+          setUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  nome: found.nome,
+                  cargo: found.cargo,
+                  turma: found.turma,
+                }
+              : null
+          );
+        }
+      }
+    }
+  }, [colaboradores]);
 
   // Dark Mode Theme state (persisted in localStorage, default to dark or user pref)
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -128,7 +159,24 @@ export default function App() {
   const [isTeamsOpen, setIsTeamsOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+  const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
   const [selectedDateModal, setSelectedDateModal] = useState<Date | null>(null);
+
+  // Vacations (Férias) state persisted in localStorage
+  const [feriasList, setFeriasList] = useState<FeriasPeriodo[]>(() => {
+    const saved = getSavedFerias();
+    return updateFeriasListStatus(saved);
+  });
+
+  const handleSaveFerias = (newList: FeriasPeriodo[]) => {
+    const updated = updateFeriasListStatus(newList);
+    setFeriasList(updated);
+    saveFeriasToStorage(updated);
+  };
+
+  const activeVacationsCount = feriasList.filter(
+    (f) => f.status === 'EM_ANDAMENTO' || f.status === 'AGENDADA'
+  ).length;
 
   useEffect(() => {
     if (user) {
@@ -166,6 +214,8 @@ export default function App() {
         onOpenLogin={() => setIsLoginOpen(true)}
         onLogout={handleLogout}
         onOpenTeams={() => setIsTeamsOpen(true)}
+        onOpenVacations={() => setIsVacationModalOpen(true)}
+        activeVacationsCount={activeVacationsCount}
         onOpenNotifications={() => setIsNotificationOpen(true)}
         onOpenInstall={() => setIsInstallModalOpen(true)}
         isDarkMode={isDarkMode}
@@ -187,6 +237,8 @@ export default function App() {
               user={user}
               selectedTurmaFilter={selectedTurmaFilter}
               onSelectTurmaFilter={handleSelectTurmaFilter}
+              colaboradores={colaboradores}
+              feriasList={feriasList}
             />
           </div>
 
@@ -200,6 +252,9 @@ export default function App() {
                 selectedYear={selectedYear}
                 onOpenLogin={() => setIsLoginOpen(true)}
                 onOpenNotifications={() => setIsNotificationOpen(true)}
+                onOpenVacations={() => setIsVacationModalOpen(true)}
+                colaboradores={colaboradores}
+                feriasList={feriasList}
               />
             ) : (
               <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-md flex flex-col justify-between gap-4">
@@ -250,6 +305,8 @@ export default function App() {
         selectedDate={selectedDateModal}
         onClose={() => setSelectedDateModal(null)}
         user={user}
+        colaboradores={colaboradores}
+        feriasList={feriasList}
       />
 
       <TeamRosterModal
@@ -260,6 +317,15 @@ export default function App() {
         onAddColaborador={handleAddColaborador}
         onDeleteColaborador={handleDeleteColaborador}
         onResetColaboradores={handleResetColaboradores}
+      />
+
+      <VacationManagementModal
+        isOpen={isVacationModalOpen}
+        onClose={() => setIsVacationModalOpen(false)}
+        colaboradores={colaboradores}
+        feriasList={feriasList}
+        onSaveFerias={handleSaveFerias}
+        initialColaboradorId={user?.colaboradorId}
       />
 
       <NotificationSettings

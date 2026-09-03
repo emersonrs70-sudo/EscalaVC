@@ -14,9 +14,11 @@ import {
   CheckCircle2,
   Bell,
   Check,
+  Palmtree,
+  ArrowRight,
 } from 'lucide-react';
-import { UserProfile } from '../types';
-import { TURNOS_CONFIG, TURMAS } from '../data/equipes';
+import { UserProfile, Colaborador, FeriasPeriodo } from '../types';
+import { TURNOS_CONFIG, TURMAS, COLABORADORES, getTurmas } from '../data/equipes';
 import {
   downloadIcsFile,
   formatDateBR,
@@ -25,6 +27,7 @@ import {
   getNextFolga,
   generateGoogleCalendarUrl,
 } from '../utils/escala';
+import { parseIsoDate } from '../utils/ferias';
 
 interface PersonalCardProps {
   user: UserProfile;
@@ -32,6 +35,9 @@ interface PersonalCardProps {
   selectedYear: number;
   onOpenLogin: () => void;
   onOpenNotifications: () => void;
+  onOpenVacations?: () => void;
+  colaboradores?: Colaborador[];
+  feriasList?: FeriasPeriodo[];
 }
 
 export const PersonalCard: React.FC<PersonalCardProps> = ({
@@ -40,13 +46,33 @@ export const PersonalCard: React.FC<PersonalCardProps> = ({
   selectedYear,
   onOpenLogin,
   onOpenNotifications,
+  onOpenVacations,
+  colaboradores = COLABORADORES,
+  feriasList = [],
 }) => {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
+  // Find user's vacations or coverages
+  const userVacation = feriasList.find(
+    (f) =>
+      (f.colaboradorId === user.colaboradorId || f.colaboradorNome.toLowerCase() === user.nome.toLowerCase()) &&
+      f.status !== 'CONCLUIDA' &&
+      f.status !== 'CANCELADA'
+  );
+
+  const userCovering = feriasList.find(
+    (f) =>
+      (f.coberturaColaboradorId === user.colaboradorId ||
+        f.coberturaColaboradorNome.toLowerCase() === user.nome.toLowerCase()) &&
+      f.status !== 'CONCLUIDA' &&
+      f.status !== 'CANCELADA'
+  );
+
+  const turmasMap = getTurmas(colaboradores);
   const today = new Date();
   const scheduleToday = getDaySchedule(today);
   const myShiftToday = scheduleToday.shiftsByTurma[user.turma];
-  const turmaInfo = TURMAS[user.turma];
+  const turmaInfo = turmasMap[user.turma] || TURMAS[user.turma];
   const nextFolgaInfo = getNextFolga(today, user.turma);
 
   const shiftConfig = TURNOS_CONFIG[myShiftToday.turno];
@@ -193,6 +219,71 @@ export const PersonalCard: React.FC<PersonalCardProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Vacation Status or Scheduling Shortcut */}
+        {userVacation ? (
+          <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-black text-amber-900 dark:text-amber-200">
+                <Palmtree className="w-4 h-4 text-amber-600" />
+                <span>Período de Férias {userVacation.status === 'EM_ANDAMENTO' ? 'Ativo' : 'Agendado'}</span>
+              </div>
+              <span className="text-[10px] bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 font-bold px-2 py-0.5 rounded-full">
+                {userVacation.diasTotais} dias
+              </span>
+            </div>
+            <div className="text-xs text-slate-800 dark:text-slate-200 font-semibold">
+              {formatDateBR(parseIsoDate(userVacation.dataInicio))} até {formatDateBR(parseIsoDate(userVacation.dataFim))}
+            </div>
+            <div className="text-[11px] text-amber-800 dark:text-amber-300 font-medium flex items-center justify-between pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+              <span>Cobre você: <strong>{userVacation.coberturaColaboradorNome}</strong></span>
+              {onOpenVacations && (
+                <button
+                  onClick={onOpenVacations}
+                  className="text-amber-700 dark:text-amber-300 hover:underline font-black"
+                >
+                  Gerenciar
+                </button>
+              )}
+            </div>
+          </div>
+        ) : userCovering ? (
+          <div className="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-black text-indigo-900 dark:text-indigo-200">
+                <Palmtree className="w-4 h-4 text-indigo-600" />
+                <span>Escalado para Cobertura de Férias</span>
+              </div>
+            </div>
+            <div className="text-xs text-slate-800 dark:text-slate-200 font-semibold">
+              Cobrindo <strong>{userCovering.colaboradorNome}</strong> (Turma {userCovering.colaboradorTurma})
+            </div>
+            <div className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium flex items-center justify-between pt-1 border-t border-indigo-200/60 dark:border-indigo-900/40">
+              <span>{formatDateBR(parseIsoDate(userCovering.dataInicio))} até {formatDateBR(parseIsoDate(userCovering.dataFim))}</span>
+              {onOpenVacations && (
+                <button
+                  onClick={onOpenVacations}
+                  className="text-indigo-600 dark:text-indigo-300 hover:underline font-bold"
+                >
+                  Ver Férias
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          onOpenVacations && (
+            <button
+              onClick={onOpenVacations}
+              className="w-full p-2.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 text-slate-600 dark:text-slate-300 text-xs font-bold flex items-center justify-between transition-all group"
+            >
+              <div className="flex items-center gap-2">
+                <Palmtree className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+                <span>Programar período de férias</span>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+            </button>
+          )
+        )}
       </div>
 
       {/* Action Footer Bar */}
