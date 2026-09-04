@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
+import { TopNav } from './components/TopNav';
 import { LoginModal } from './components/LoginModal';
 import { PersonalCard } from './components/PersonalCard';
 import { CalendarView } from './components/CalendarView';
@@ -23,6 +24,31 @@ export default function App() {
 
   // Active Turma Filter (defaults to 'GERAL' for 4 Turmas view on startup)
   const [selectedTurmaFilter, setSelectedTurmaFilter] = useState<TurmaId | 'GERAL'>('GERAL');
+
+  // Sidebar Expand State (Desktop) & Mobile Drawer State
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('escala_6x2_sidebar_expanded');
+      if (saved !== null) return saved === 'true';
+    } catch {
+      // ignore
+    }
+    return true; // default expanded on desktop
+  });
+
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
+
+  const handleToggleSidebar = () => {
+    setIsSidebarExpanded((prev) => {
+      const nextVal = !prev;
+      try {
+        localStorage.setItem('escala_6x2_sidebar_expanded', String(nextVal));
+      } catch {
+        // ignore
+      }
+      return nextVal;
+    });
+  };
 
   const handleSelectTurmaFilter = (turma: TurmaId | 'GERAL') => {
     setSelectedTurmaFilter(turma);
@@ -55,7 +81,6 @@ export default function App() {
     setColaboradores((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
     );
-    // If the currently logged-in user is this collaborator, update their profile state
     if (user && (user.colaboradorId === updated.id || (!user.colaboradorId && user.nome === updated.nome))) {
       setUser((prevUser) =>
         prevUser
@@ -115,7 +140,7 @@ export default function App() {
     }
   }, [colaboradores]);
 
-  // Dark Mode Theme state (persisted in localStorage, default to dark or user pref)
+  // Dark Mode Theme state (persisted in localStorage)
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('escala_6x2_theme');
@@ -144,6 +169,7 @@ export default function App() {
   const handleToggleTheme = () => {
     setIsDarkMode((prev) => !prev);
   };
+
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem('escala_6x2_user');
@@ -189,7 +215,6 @@ export default function App() {
       localStorage.removeItem('escala_6x2_user');
     }
 
-    // Automatically check and send daily scheduled notifications if due
     checkAndSendScheduledNotifications(user);
   }, [user]);
 
@@ -207,9 +232,13 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased selection:bg-blue-500 selection:text-white pb-12">
-      {/* Top Navigation Bar */}
-      <Header
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
+      {/* Expandable Sidebar (Desktop) + Slide-in Drawer (Mobile) */}
+      <Sidebar
+        isExpanded={isSidebarExpanded}
+        onToggleExpand={handleToggleSidebar}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
         user={user}
         onOpenLogin={() => setIsLoginOpen(true)}
         onLogout={handleLogout}
@@ -220,77 +249,98 @@ export default function App() {
         onOpenInstall={() => setIsInstallModalOpen(true)}
         isDarkMode={isDarkMode}
         onToggleTheme={handleToggleTheme}
+        selectedTurmaFilter={selectedTurmaFilter}
+        onSelectTurmaFilter={handleSelectTurmaFilter}
       />
 
-      {/* Main Container */}
-      <main className="max-w-4xl lg:max-w-7xl 2xl:max-w-[1500px] w-full mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 flex-1">
-        {/* Responsive Grid Layout for PC (lg:) vs Stack for Mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
-          {/* Main Column: Prominent Calendar View FIRST */}
-          <div id="calendar-section" className="lg:col-span-8 xl:col-span-9 scroll-mt-20">
-            <CalendarView
-              currentDate={today}
-              selectedMonth={selectedMonth}
-              selectedYear={selectedYear}
-              onChangeMonthYear={handleChangeMonthYear}
-              onSelectDay={(date) => setSelectedDateModal(date)}
-              user={user}
-              selectedTurmaFilter={selectedTurmaFilter}
-              onSelectTurmaFilter={handleSelectTurmaFilter}
-              colaboradores={colaboradores}
-              feriasList={feriasList}
-            />
-          </div>
+      {/* Main Content Area (Adjusts margin according to sidebar width) */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+          isSidebarExpanded ? 'lg:pl-64' : 'lg:pl-18'
+        }`}
+      >
+        {/* Sleek Top Navigation */}
+        <TopNav
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          user={user}
+          onOpenLogin={() => setIsLoginOpen(true)}
+          onOpenVacations={() => setIsVacationModalOpen(true)}
+          activeVacationsCount={activeVacationsCount}
+          selectedTurmaFilter={selectedTurmaFilter}
+          onSelectTurmaFilter={handleSelectTurmaFilter}
+        />
 
-          {/* Right Column / Sidebar on Desktop */}
-          <div className="lg:col-span-4 xl:col-span-3 space-y-4 sm:space-y-6 lg:sticky lg:top-20 lg:self-start">
-            {/* Personal Card (if logged in) */}
-            {user ? (
-              <PersonalCard
-                user={user}
+        {/* Page Content */}
+        <main className="flex-1 w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-4 sm:py-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+            {/* Primary Centerpiece: High-readability Calendar */}
+            <div id="calendar-section" className="xl:col-span-8 2xl:col-span-9 scroll-mt-20">
+              <CalendarView
+                currentDate={today}
                 selectedMonth={selectedMonth}
                 selectedYear={selectedYear}
-                onOpenLogin={() => setIsLoginOpen(true)}
-                onOpenNotifications={() => setIsNotificationOpen(true)}
-                onOpenVacations={() => setIsVacationModalOpen(true)}
+                onChangeMonthYear={handleChangeMonthYear}
+                onSelectDay={(date) => setSelectedDateModal(date)}
+                user={user}
+                selectedTurmaFilter={selectedTurmaFilter}
+                onSelectTurmaFilter={handleSelectTurmaFilter}
                 colaboradores={colaboradores}
                 feriasList={feriasList}
               />
-            ) : (
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-md flex flex-col justify-between gap-4">
-                <div>
-                  <h2 className="text-base font-bold">Bem-vindo à Escala 6x2</h2>
-                  <p className="text-xs text-blue-100 mt-1">
-                    Consulte a escala mensal de trabalho das 4 turmas (A, B, C e D) ou selecione seu perfil para ver seus horários individuais.
-                  </p>
+            </div>
+
+            {/* Side Panel: Contextual Personal Card + Today's Summary */}
+            <div className="xl:col-span-4 2xl:col-span-3 space-y-5 xl:sticky xl:top-20 xl:self-start">
+              {/* Personal Card (or guest invitation) */}
+              {user ? (
+                <PersonalCard
+                  user={user}
+                  selectedMonth={selectedMonth}
+                  selectedYear={selectedYear}
+                  onOpenLogin={() => setIsLoginOpen(true)}
+                  onOpenNotifications={() => setIsNotificationOpen(true)}
+                  onOpenVacations={() => setIsVacationModalOpen(true)}
+                  colaboradores={colaboradores}
+                  feriasList={feriasList}
+                />
+              ) : (
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                      Selecione seu Perfil
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                      Identifique sua turma e operador para receber lembretes dos seus turnos, ver próximas folgas e exportar para seu calendário pessoal.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsLoginOpen(true)}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition-all active:scale-95 text-center"
+                  >
+                    Identificar Colaborador
+                  </button>
                 </div>
-                <button
-                  onClick={() => setIsLoginOpen(true)}
-                  className="px-4 py-2.5 bg-white text-blue-700 rounded-xl font-bold text-xs shadow-xs hover:bg-blue-50 transition-colors w-full text-center"
-                >
-                  Selecionar Meu Perfil
-                </button>
-              </div>
-            )}
+              )}
 
-            {/* Today's Shifts across the 4 Turmas */}
-            <TodayShiftSummary
-              colaboradores={colaboradores}
-              onSelectTurmaFilter={handleSelectTurmaFilter}
-            />
+              {/* Today's Shifts across the 4 Turmas */}
+              <TodayShiftSummary
+                colaboradores={colaboradores}
+                onSelectTurmaFilter={handleSelectTurmaFilter}
+              />
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
 
-      {/* Footer */}
-      <footer className="mt-12 py-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
-        <p className="font-semibold text-slate-700 dark:text-slate-300">
-          Sistema de Consulta de Escala de Trabalho 6x2
-        </p>
-        <p className="text-[11px] mt-1 text-slate-400">
-          Turnos: Manhã (06:00-14:18) • Tarde (14:15-22:30) • Noite (22:30-06:00) • Folga
-        </p>
-      </footer>
+        {/* Minimalist Subdued Footer */}
+        <footer className="py-5 px-4 border-t border-slate-200/80 dark:border-slate-800/80 text-center text-xs text-slate-500 dark:text-slate-400">
+          <p className="font-semibold text-slate-700 dark:text-slate-300">
+            Escala 6x2 • Sistema de Gestão Operacional de Turnos
+          </p>
+          <p className="text-[11px] mt-0.5 text-slate-400 dark:text-slate-500">
+            Manhã (06h - 14h) • Tarde (14h - 22h) • Noite (22h - 06h) • Folga Contínua
+          </p>
+        </footer>
+      </div>
 
       {/* Modals */}
       <LoginModal
