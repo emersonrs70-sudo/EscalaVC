@@ -271,8 +271,8 @@ export default function App() {
         />
 
         {/* Page Content */}
-        <main className="flex-1 w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-4 sm:py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        <main className="flex-1 w-full max-w-[1600px] mx-auto px-1.5 sm:px-4 lg:px-6 py-2 sm:py-5">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 sm:gap-5 items-start">
             {/* Primary Centerpiece: High-readability Calendar */}
             <div id="calendar-section" className="xl:col-span-8 2xl:col-span-9 scroll-mt-20">
               <CalendarView
