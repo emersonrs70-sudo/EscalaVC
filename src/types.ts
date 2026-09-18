@@ -1,52 +1,63 @@
-export type EmployeeRole = 'ADMIN' | 'COLLABORATOR';
+export type Turno = 'MANHA' | 'TARDE' | 'NOITE' | 'FOLGA';
 
-export interface Employee {
+export type TurmaId = 'A' | 'B' | 'C' | 'D';
+
+export interface Colaborador {
   id: string;
-  name: string;
-  role: EmployeeRole;
-  department: string;
-  avatar: string;
-  email: string;
-  color: string; // color tag for calendar/avatars
-  team?: 'A' | 'B' | 'C' | 'D' | 'N/A';
-  position?: string;
+  nome: string;
+  cargo: string;
+  turma: TurmaId;
 }
 
-export interface ShiftType {
-  id: string;
-  name: string;
-  startTime: string; // e.g. "07:00"
-  endTime: string; // e.g. "15:00"
-  color: string; // primary Tailwind color class name, e.g., "blue-500"
-  bgColor: string; // Tailwind background color class, e.g., "bg-blue-50"
-  borderColor: string; // border style, e.g., "border-blue-200"
-  textColor: string; // text color, e.g., "text-blue-700"
+export interface TurmaInfo {
+  id: TurmaId;
+  nome: string;
+  cor: string;
+  bgCor: string;
+  borderCor: string;
+  badgeCor: string;
+  textCor: string;
+  colaboradores: Colaborador[];
 }
 
-export interface Shift {
-  id: string;
-  employeeId: string;
-  date: string; // YYYY-MM-DD
-  shiftTypeId: string;
-  notes?: string;
+export interface ShiftInfo {
+  turno: Turno;
+  nomeTurno: string;
+  horario: string;
+  turmaId: TurmaId;
+  diaCiclo: number; // 0..7
+  diaDescricao: string; // ex: "1º Dia de Manhã", "1ª Folga"
 }
 
-export type SwapStatus = 
-  | 'PENDING_RECEIVER'  // Waiting for the other employee to accept
-  | 'REJECTED_RECEIVER' // The other employee declined the swap
-  | 'PENDING_ADMIN'     // Both employees agreed, waiting for manager's approval
-  | 'APPROVED'          // Approved by manager, shift swapped in system
-  | 'REJECTED_ADMIN';   // Declined by manager
-
-export interface SwapRequest {
-  id: string;
-  requesterId: string;
-  requestedShiftId: string; // The shift the requester wants to get rid of
-  targetShiftId: string | null; // The shift the requester wants to receive (null if open request)
-  receiverId: string | null; // The specific colleague offered (null if open to anyone)
-  status: SwapStatus;
-  createdAt: string;
-  message?: string;
+export interface DaySchedule {
+  date: Date;
+  dateStr: string; // YYYY-MM-DD
+  shiftsByTurma: Record<TurmaId, ShiftInfo>;
+  turmaByTurno: Record<Turno, TurmaId>;
 }
 
+export interface UserProfile {
+  colaboradorId?: string;
+  nome?: string;
+  cargo?: string;
+  turma: TurmaId;
+  modoAnonimo?: boolean;
+}
 
+export interface FeriasPeriodo {
+  id: string;
+  colaboradorId: string;
+  colaboradorNome: string;
+  colaboradorTurma: TurmaId;
+  colaboradorCargo: string;
+  dataInicio: string; // YYYY-MM-DD
+  dataFim: string; // YYYY-MM-DD
+  coberturaColaboradorId: string;
+  coberturaColaboradorNome: string;
+  coberturaTurmaOrigem?: TurmaId | 'EXTERNO' | 'OUTRO_SETOR' | string;
+  coberturaCargo: string;
+  coberturaSetorOrigem?: string;
+  coberturaIsExterno?: boolean;
+  observacoes?: string;
+  status: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA';
+}
