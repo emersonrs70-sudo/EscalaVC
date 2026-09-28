@@ -1,3 +1,174 @@
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
+
+/* ============================================================== */
+/* TIPOGRAFIA FLUIDA E ESCALONAMENTO PROPORCIONAL DINÂMICO       */
+/* (Previne sobreposição de texto em qualquer proporção de tela)  */
+/* ============================================================== */
+
+.calendar-day-cell {
+  container-type: inline-size;
+  container-name: daycell;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Linha de Horário Operacional (06:00, 14:15, 22:30) */
+.cal-shift-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(1px, 0.6cqi, 3px) clamp(2.5px, 1.4cqi, 6px);
+  gap: clamp(1px, 0.8cqi, 4px);
+  min-width: 0;
+  width: 100%;
+}
+
+/* Bloco Esquerdo: Horário Operacional */
+.cal-shift-time {
+  display: flex;
+  align-items: center;
+  gap: clamp(1px, 0.6cqi, 3px);
+  font-size: clamp(7.5px, 9cqi, 10.5px);
+  line-height: 1;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Badge Direito: Letra da Turma */
+.cal-shift-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(13px, 15cqi, 20px);
+  height: clamp(12px, 13.5cqi, 17px);
+  font-size: clamp(7.5px, 9cqi, 10.5px);
+  font-weight: 900;
+  border-radius: clamp(2px, 3cqi, 4px);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Alternância suave entre horário completo (06:00) e compacto (06h) em larguras críticas */
+@container daycell (max-width: 78px) {
+  .cal-time-full {
+    display: none !important;
+  }
+  .cal-time-short {
+    display: inline !important;
+  }
+}
+
+@container daycell (min-width: 79px) {
+  .cal-time-full {
+    display: inline !important;
+  }
+  .cal-time-short {
+    display: none !important;
+  }
+}
+
+/* Cabeçalho do Dia (Número + Folga) */
+.cal-cell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(2px, 1cqi, 4px);
+  margin-bottom: clamp(1px, 0.8cqi, 4px);
+  min-width: 0;
+  width: 100%;
+  line-height: 1;
+}
+
+.cal-day-num {
+  font-size: clamp(9.5px, 11.5cqi, 13px);
+  font-weight: 900;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cal-today-badge {
+  width: clamp(16px, 18cqi, 23px);
+  height: clamp(16px, 18cqi, 23px);
+  border-radius: 9999px;
+  font-size: clamp(8px, 10cqi, 11px);
+}
+
+.cal-vacation-icon {
+  width: clamp(9px, 10cqi, 12px);
+  height: clamp(9px, 10cqi, 12px);
+  flex-shrink: 0;
+}
+
+/* Badge de Folga Responsivo */
+.cal-folga-badge {
+  display: flex;
+  align-items: center;
+  gap: clamp(1px, 0.6cqi, 3px);
+  padding: clamp(1px, 0.4cqi, 2px) clamp(2px, 0.8cqi, 5px);
+  border-radius: clamp(2px, 3cqi, 4px);
+  line-height: 1;
+  flex-shrink: 0;
+  max-width: 75%;
+}
+
+.cal-folga-label {
+  font-size: clamp(6.5px, 7.5cqi, 9px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cal-folga-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(11px, 13cqi, 16px);
+  height: clamp(11px, 13cqi, 16px);
+  font-size: clamp(7px, 8.5cqi, 10px);
+  font-weight: 900;
+  border-radius: clamp(2px, 2.5cqi, 3px);
+  flex-shrink: 0;
+}
+
+/* Adaptações Automáticas por Largura da Célula */
+@container daycell (max-width: 84px) {
+  .cal-folga-full {
+    display: none !important;
+  }
+  .cal-folga-short {
+    display: inline !important;
+  }
+}
+
+@container daycell (min-width: 85px) {
+  .cal-folga-full {
+    display: inline !important;
+  }
+  .cal-folga-short {
+    display: none !important;
+  }
+}
+
+@container daycell (max-width: 58px) {
+  .cal-folga-label {
+    display: none !important;
+  }
+}
+
+/* Visualização de Turma Única (Filtro A, B, C ou D) */
+.cal-single-card {
+  padding: clamp(2px, 1.2cqi, 6px);
+  min-width: 0;
+}
+
+.cal-single-title {
+  font-size: clamp(8px, 9.8cqi, 12px);
+}
+
+.cal-single-subtitle {
+  font-size: clamp(7px, 8.5cqi, 10px);
+}

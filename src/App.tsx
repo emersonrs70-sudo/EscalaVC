@@ -14,6 +14,13 @@ import { Colaborador, UserProfile, TurmaId, FeriasPeriodo } from './types';
 import { COLABORADORES } from './data/equipes';
 import { checkAndSendScheduledNotifications } from './utils/notifications';
 import { getSavedFerias, saveFeriasToStorage, updateFeriasListStatus } from './utils/ferias';
+import { subscribeToFeriasInCloud, syncEntireFeriasListToCloud } from './utils/feriasCloud';
+import {
+  subscribeToColaboradoresInCloud,
+  saveColaboradorToCloud,
+  deleteColaboradorFromCloud,
+  syncEntireColaboradoresListToCloud,
+} from './utils/colaboradoresCloud';
 
 export default function App() {
   const today = new Date();
@@ -58,7 +65,7 @@ export default function App() {
     }
   };
 
-  // Editable collaborators state with localStorage persistence
+  // Editable collaborators state with Cloud (Firestore) real-time synchronization + offline cache
   const [colaboradores, setColaboradores] = useState<Colaborador[]>(() => {
     try {
       const saved = localStorage.getItem('escala_6x2_colaboradores');
@@ -69,15 +76,21 @@ export default function App() {
     return COLABORADORES;
   });
 
+  // Subscribe to real-time Cloud updates for colaboradores
   useEffect(() => {
-    try {
-      localStorage.setItem('escala_6x2_colaboradores', JSON.stringify(colaboradores));
-    } catch {
-      // ignore
-    }
-  }, [colaboradores]);
+    const unsubscribe = subscribeToColaboradoresInCloud(
+      (cloudList) => {
+        setColaboradores(cloudList);
+      },
+      (err) => {
+        console.warn('Operando com cache local de colaboradores:', err);
+      }
+    );
 
-  const handleUpdateColaborador = (updated: Colaborador) => {
+    return () => unsubscribe();
+  }, []);
+
+  const handleUpdateColaborador = async (updated: Colaborador) => {
     setColaboradores((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
     );
@@ -94,25 +107,45 @@ export default function App() {
           : null
       );
     }
+    try {
+      await saveColaboradorToCloud(updated);
+    } catch (e) {
+      console.error('Erro ao salvar colaborador no Firestore:', e);
+    }
   };
 
-  const handleAddColaborador = (newColabData: Omit<Colaborador, 'id'>) => {
+  const handleAddColaborador = async (newColabData: Omit<Colaborador, 'id'>) => {
     const newColab: Colaborador = {
       ...newColabData,
       id: `colab_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     };
     setColaboradores((prev) => [...prev, newColab]);
+    try {
+      await saveColaboradorToCloud(newColab);
+    } catch (e) {
+      console.error('Erro ao adicionar colaborador no Firestore:', e);
+    }
   };
 
-  const handleDeleteColaborador = (id: string) => {
+  const handleDeleteColaborador = async (id: string) => {
     setColaboradores((prev) => prev.filter((c) => c.id !== id));
     if (user && user.colaboradorId === id) {
       setUser(null);
     }
+    try {
+      await deleteColaboradorFromCloud(id);
+    } catch (e) {
+      console.error('Erro ao deletar colaborador no Firestore:', e);
+    }
   };
 
-  const handleResetColaboradores = () => {
+  const handleResetColaboradores = async () => {
     setColaboradores(COLABORADORES);
+    try {
+      await syncEntireColaboradoresListToCloud(COLABORADORES);
+    } catch (e) {
+      console.error('Erro ao restaurar colaboradores no Firestore:', e);
+    }
   };
 
   // Keep logged in user state synchronized with colaboradores
@@ -188,16 +221,38 @@ export default function App() {
   const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
   const [selectedDateModal, setSelectedDateModal] = useState<Date | null>(null);
 
-  // Vacations (Férias) state persisted in localStorage
+  // Vacations (Férias) state synced with Firestore in real-time
   const [feriasList, setFeriasList] = useState<FeriasPeriodo[]>(() => {
     const saved = getSavedFerias();
     return updateFeriasListStatus(saved);
   });
+  const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
 
-  const handleSaveFerias = (newList: FeriasPeriodo[]) => {
+  useEffect(() => {
+    // Inscreve no Firebase Firestore em tempo real
+    const unsubscribe = subscribeToFeriasInCloud(
+      (cloudData) => {
+        setFeriasList(cloudData);
+        setIsCloudSynced(true);
+      },
+      (err) => {
+        console.warn('Operando com cache local enquanto reconecta à nuvem:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSaveFerias = async (newList: FeriasPeriodo[]) => {
     const updated = updateFeriasListStatus(newList);
     setFeriasList(updated);
     saveFeriasToStorage(updated);
+    try {
+      await syncEntireFeriasListToCloud(updated);
+      setIsCloudSynced(true);
+    } catch (e) {
+      console.error('Falha ao sincronizar férias com o Firestore:', e);
+    }
   };
 
   const activeVacationsCount = feriasList.filter(
@@ -376,6 +431,7 @@ export default function App() {
         feriasList={feriasList}
         onSaveFerias={handleSaveFerias}
         initialColaboradorId={user?.colaboradorId}
+        isCloudSynced={isCloudSynced}
       />
 
       <NotificationSettings

@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "ferias": {
+      "title": "Férias e Coberturas",
+      "description": "Períodos de férias agendados e colaboradores de cobertura designados",
+      "type": "object",
+      "properties": {
+        "colaboradorId": { "type": "string" },
+        "colaboradorNome": { "type": "string" },
+        "colaboradorTurma": { "type": "string" },
+        "colaboradorCargo": { "type": "string" },
+        "dataInicio": { "type": "string" },
+        "dataFim": { "type": "string" },
+        "coberturaColaboradorId": { "type": "string" },
+        "coberturaColaboradorNome": { "type": "string" },
+        "coberturaTurmaOrigem": { "type": "string" },
+        "coberturaCargo": { "type": "string" },
+        "coberturaSetorOrigem": { "type": "string" },
+        "coberturaIsExterno": { "type": "boolean" },
+        "observacoes": { "type": "string" },
+        "status": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["colaboradorNome", "colaboradorTurma", "dataInicio", "dataFim"]
+    },
+    "colaboradores": {
+      "title": "Colaborador da Escala",
+      "description": "Registro de operadores e colaboradores por turma (A, B, C, D) sincronizados na nuvem",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "cargo": { "type": "string" },
+        "turma": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["nome", "cargo", "turma"]
+    }
+  },
+  "firestore": {
+    "rules": "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /ferias/{feriasId} {\n      allow read, write: if true;\n    }\n    match /colaboradores/{colaboradorId} {\n      allow read, write: if true;\n    }\n  }\n}"
+  }
+}

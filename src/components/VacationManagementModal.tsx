@@ -16,6 +16,8 @@ import {
   Users,
   UserPlus,
   Building2,
+  Cloud,
+  CloudCheck,
 } from 'lucide-react';
 import { Colaborador, FeriasPeriodo, TurmaId } from '../types';
 import { TURMAS } from '../data/equipes';
@@ -34,6 +36,7 @@ interface VacationManagementModalProps {
   feriasList: FeriasPeriodo[];
   onSaveFerias: (ferias: FeriasPeriodo[]) => void;
   initialColaboradorId?: string;
+  isCloudSynced?: boolean;
 }
 
 export const VacationManagementModal: React.FC<VacationManagementModalProps> = ({
@@ -43,6 +46,7 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
   feriasList,
   onSaveFerias,
   initialColaboradorId,
+  isCloudSynced = true,
 }) => {
   const [activeTab, setActiveTab] = useState<'LISTA' | 'CADASTRAR'>('LISTA');
   const [filterStatus, setFilterStatus] = useState<'TODAS' | 'EM_ANDAMENTO' | 'AGENDADA' | 'CONCLUIDA'>('TODAS');
@@ -243,14 +247,34 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl bg-black/15 hover:bg-black/30 text-white transition-colors"
-            title="Fechar"
-            aria-label="Fechar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {isCloudSynced ? (
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/30 border border-emerald-300/40 text-[11px] font-extrabold text-emerald-100"
+                title="Sincronizado na nuvem (Firestore em tempo real)"
+              >
+                <CloudCheck className="w-3.5 h-3.5 text-emerald-200" />
+                <span>Nuvem Ativa</span>
+              </div>
+            ) : (
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/20 border border-white/30 text-[11px] font-extrabold text-white"
+                title="Sincronizando com a nuvem..."
+              >
+                <Cloud className="w-3.5 h-3.5 animate-pulse" />
+                <span>Sincronizando...</span>
+              </div>
+            )}
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl bg-black/15 hover:bg-black/30 text-white transition-colors"
+              title="Fechar"
+              aria-label="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tab Switcher */}

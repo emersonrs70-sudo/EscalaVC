@@ -130,6 +130,6 @@ export const TURNOS_CONFIG = {
     corBg: 'bg-emerald-50 dark:bg-emerald-950/60',
     corBadge: 'bg-emerald-600 text-white',
     corBorder: 'border-emerald-200 dark:border-emerald-800',
-    emoji: '🌴',
+    emoji: '☕',
   },
 };

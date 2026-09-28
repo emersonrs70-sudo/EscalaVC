@@ -207,7 +207,7 @@ export function generateGoogleCalendarUrl(
 ): string {
   const title = encodeURIComponent(
     turno === 'FOLGA'
-      ? `🎉 FOLGA - Turma ${turmaId}${colaboradorNome ? ` (${colaboradorNome})` : ''}`
+      ? `☕ FOLGA - Turma ${turmaId}${colaboradorNome ? ` (${colaboradorNome})` : ''}`
       : `🏭 Turno de ${TURNOS_CONFIG[turno].nome} (${TURNOS_CONFIG[turno].horario}) - Turma ${turmaId}`
   );
 
@@ -275,7 +275,7 @@ export function generateIcsContent(
 
     let summary = `Turno ${shift.nomeTurno} - Turma ${turmaId}`;
     if (shift.turno === 'FOLGA') {
-      summary = `FOLGA 🎉 - Turma ${turmaId}`;
+      summary = `FOLGA ☕ - Turma ${turmaId}`;
     }
     if (colaboradorNome) {
       summary += ` (${colaboradorNome})`;

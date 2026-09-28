@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /ferias/{feriasId} {
+      allow read, write: if true;
+    }
+    match /colaboradores/{colaboradorId} {
+      allow read, write: if true;
+    }
+  }
+}

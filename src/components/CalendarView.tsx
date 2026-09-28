@@ -7,6 +7,7 @@ import {
   Filter,
   List,
   Grid3X3,
+  Coffee,
 } from 'lucide-react';
 import { TurmaId, UserProfile, Colaborador, FeriasPeriodo } from '../types';
 import { TURNOS_CONFIG, TURMAS, COLABORADORES, getTurmas } from '../data/equipes';
@@ -232,26 +233,33 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           })}
         </div>
 
-        {/* Legenda Prática dos 3 Horários Operacionais + Folga */}
-        <div className="flex items-center gap-2.5 sm:gap-3 text-[11px] text-slate-600 dark:text-slate-400 font-semibold overflow-x-auto">
-          <span className="flex items-center gap-1 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-sky-500" />
-            <span className="font-bold text-slate-700 dark:text-slate-300">06h</span>
-            <span className="text-[10px] text-slate-400 hidden md:inline">(06-14h)</span>
+        {/* Legenda Prática dos 3 Horários Operacionais com Preenchimento Característico + Folga com Café */}
+        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] font-bold overflow-x-auto py-0.5">
+          {/* Manhã: 06:00 */}
+          <span className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-sky-800 dark:text-sky-300 shadow-2xs">
+            <span className="text-[11px]">🌅</span>
+            <span className="font-extrabold tracking-tight">06:00</span>
+            <span className="text-[9.5px] opacity-75 hidden md:inline">(às 14:18)</span>
           </span>
-          <span className="flex items-center gap-1 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="font-bold text-slate-700 dark:text-slate-300">14h</span>
-            <span className="text-[10px] text-slate-400 hidden md:inline">(14-22h)</span>
+
+          {/* Tarde: 14:15 */}
+          <span className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 shadow-2xs">
+            <span className="text-[11px]">☀️</span>
+            <span className="font-extrabold tracking-tight">14:15</span>
+            <span className="text-[9.5px] opacity-75 hidden md:inline">(às 22:30)</span>
           </span>
-          <span className="flex items-center gap-1 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-indigo-500" />
-            <span className="font-bold text-slate-700 dark:text-slate-300">22h</span>
-            <span className="text-[10px] text-slate-400 hidden md:inline">(22-06h)</span>
+
+          {/* Noite: 22:30 */}
+          <span className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300 shadow-2xs">
+            <span className="text-[11px]">🌙</span>
+            <span className="font-extrabold tracking-tight">22:30</span>
+            <span className="text-[9.5px] opacity-75 hidden md:inline">(às 06:00)</span>
           </span>
-          <span className="flex items-center gap-1 shrink-0 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-1.5 py-0.5 rounded text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-0.5" />
-            <span>Folga</span>
+
+          {/* Folga: Ícone de Café */}
+          <span className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 shadow-2xs">
+            <Coffee className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <span className="font-extrabold tracking-tight">Folga</span>
           </span>
         </div>
       </div>
@@ -353,9 +361,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Folga */}
+                    {/* Folga com Café */}
                     <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800">
-                      <div className="text-[9.5px] font-extrabold text-emerald-800 dark:text-emerald-300">Folga</div>
+                      <div className="text-[9.5px] font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center justify-center gap-0.5">
+                        <Coffee className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Folga</span>
+                      </div>
                       <div className="mt-1 py-0.5 rounded text-xs font-black bg-emerald-500 text-white">
                         T-{schedule.turmaByTurno.FOLGA}
                       </div>
@@ -441,19 +452,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 <div
                   key={dayNum}
                   onClick={() => onSelectDay(date)}
-                  className={`min-h-[64px] sm:min-h-[105px] lg:min-h-[118px] p-1 sm:p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex flex-col justify-between group select-none ${
+                  className={`calendar-day-cell min-h-[64px] sm:min-h-[105px] lg:min-h-[118px] p-1 sm:p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex flex-col justify-between group select-none ${
                     isToday
                       ? 'border-blue-500 dark:border-blue-400 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/30 shadow-xs'
                       : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
                   }`}
                 >
                   {/* Topo da Célula: Número do Dia + Turma em Folga Evidenciada + Férias */}
-                  <div className="flex items-center justify-between leading-none mb-1">
-                    <div className="flex items-center gap-1">
+                  <div className="cal-cell-header">
+                    <div className="flex items-center gap-1 min-w-0">
                       <span
-                        className={`text-[11px] sm:text-sm font-black transition-colors ${
+                        className={`cal-day-num transition-colors ${
                           isToday
-                            ? 'w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] sm:text-xs shadow-2xs'
+                            ? 'cal-today-badge bg-blue-600 text-white flex items-center justify-center shadow-2xs'
                             : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                         }`}
                       >
@@ -462,68 +473,69 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
                       {dateVacations.length > 0 && (
                         <span
-                          className="text-amber-600 dark:text-amber-400"
+                          className="text-amber-600 dark:text-amber-400 shrink-0"
                           title={`${dateVacations.length} em férias`}
                         >
-                          <Palmtree className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <Palmtree className="cal-vacation-icon" />
                         </span>
                       )}
                     </div>
 
-                    {/* Turma em Folga Evidenciada com Distinção Suave */}
+                    {/* Turma em Folga Evidenciada com Ícone de Café */}
                     {selectedTurmaFilter === 'GERAL' && (
                       <span
-                        className="flex items-center gap-0.5 px-1 sm:px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 leading-none"
+                        className="cal-folga-badge bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300"
                         title={`Turma ${schedule.turmaByTurno.FOLGA} de Folga`}
                       >
-                        <span className="text-[7.5px] sm:text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tighter">
-                          <span className="xs:hidden">F:</span>
-                          <span className="hidden xs:inline">Folga:</span>
+                        <Coffee className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="cal-folga-label text-emerald-700 dark:text-emerald-400">
+                          <span className="cal-folga-full">Folga:</span>
+                          <span className="cal-folga-short">F:</span>
                         </span>
-                        <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded flex items-center justify-center text-[8.5px] sm:text-[10px] font-black bg-emerald-500 text-white shadow-2xs">
+                        <span className="cal-folga-letter bg-emerald-500 text-white shadow-2xs">
                           {schedule.turmaByTurno.FOLGA}
                         </span>
                       </span>
                     )}
                   </div>
 
-                  {/* Conteúdo: Os 3 Horários Operacionais Claros e Práticos */}
+                  {/* Conteúdo: Os 3 Horários Operacionais Claros e Práticos sem dot */}
                   {selectedTurmaFilter === 'GERAL' ? (
-                    <div className="space-y-0.5 sm:space-y-1">
-                      {/* Horário 1: 06h (Manhã) */}
-                      <div className="flex items-center justify-between px-1 sm:px-1.5 py-0.5 rounded bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100/80 dark:border-sky-900/30 leading-none">
-                        <span className="text-[8.5px] sm:text-[10px] font-bold text-sky-800 dark:text-sky-300 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0" />
-                          <span>06h</span>
+                    <div className="space-y-0.5 sm:space-y-1 w-full min-w-0">
+                      {/* Horário 1: 06:00 (Manhã) */}
+                      <div className="cal-shift-row rounded bg-sky-50/75 dark:bg-sky-950/35 border border-sky-100/90 dark:border-sky-900/35">
+                        <span className="cal-shift-time text-sky-800 dark:text-sky-300 font-extrabold tracking-tight">
+                          <span className="cal-time-full">06:00</span>
+                          <span className="cal-time-short">06h</span>
                         </span>
                         <span
-                          className={`w-4 h-3.5 sm:w-5 sm:h-4 rounded flex items-center justify-center text-[9px] sm:text-[10.5px] font-black shrink-0 ${TURMAS[schedule.turmaByTurno.MANHA].badgeCor}`}
+                          className={`cal-shift-badge ${TURMAS[schedule.turmaByTurno.MANHA].badgeCor}`}
                         >
                           {schedule.turmaByTurno.MANHA}
                         </span>
                       </div>
 
-                      {/* Horário 2: 14h (Tarde) */}
-                      <div className="flex items-center justify-between px-1 sm:px-1.5 py-0.5 rounded bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100/80 dark:border-amber-900/30 leading-none">
-                        <span className="text-[8.5px] sm:text-[10px] font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                          <span>14h</span>
+                      {/* Horário 2: 14:15 (Tarde) */}
+                      <div className="cal-shift-row rounded bg-amber-50/75 dark:bg-amber-950/35 border border-amber-100/90 dark:border-amber-900/35">
+                        <span className="cal-shift-time text-amber-800 dark:text-amber-300 font-extrabold tracking-tight">
+                          <span className="cal-time-full">14:15</span>
+                          <span className="cal-time-short">14h</span>
                         </span>
                         <span
-                          className={`w-4 h-3.5 sm:w-5 sm:h-4 rounded flex items-center justify-center text-[9px] sm:text-[10.5px] font-black shrink-0 ${TURMAS[schedule.turmaByTurno.TARDE].badgeCor}`}
+                          className={`cal-shift-badge ${TURMAS[schedule.turmaByTurno.TARDE].badgeCor}`}
                         >
                           {schedule.turmaByTurno.TARDE}
                         </span>
                       </div>
 
-                      {/* Horário 3: 22h (Noite) */}
-                      <div className="flex items-center justify-between px-1 sm:px-1.5 py-0.5 rounded bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100/80 dark:border-indigo-900/30 leading-none">
-                        <span className="text-[8.5px] sm:text-[10px] font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
-                          <span>22h</span>
+                      {/* Horário 3: 22:30 (Noite) */}
+                      <div className="cal-shift-row rounded bg-indigo-50/75 dark:bg-indigo-950/35 border border-indigo-100/90 dark:border-indigo-900/35">
+                        <span className="cal-shift-time text-indigo-800 dark:text-indigo-300 font-extrabold tracking-tight">
+                          <span className="cal-time-full">22:30</span>
+                          <span className="cal-time-short">22h</span>
                         </span>
                         <span
-                          className={`w-4 h-3.5 sm:w-5 sm:h-4 rounded flex items-center justify-center text-[9px] sm:text-[10.5px] font-black shrink-0 ${TURMAS[schedule.turmaByTurno.NOITE].badgeCor}`}
+                          className={`cal-shift-badge ${TURMAS[schedule.turmaByTurno.NOITE].badgeCor}`}
                         >
                           {schedule.turmaByTurno.NOITE}
                         </span>
@@ -531,19 +543,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     </div>
                   ) : (
                     /* MODO TURMA ESPECÍFICA (A, B, C ou D): Direto e Limpo */
-                    <div className="mt-1 flex-1 flex flex-col justify-end">
+                    <div className="mt-1 flex-1 flex flex-col justify-end w-full min-w-0">
                       <div
-                        className={`p-1 sm:p-2 rounded-md sm:rounded-xl border text-center transition-all ${
+                        className={`cal-single-card rounded-md sm:rounded-xl border text-center transition-all ${
                           isFilterFolga
                             ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
                             : `${filterConfig?.corBg} ${filterConfig?.corBorder} ${filterConfig?.corText}`
                         }`}
                       >
-                        <div className="text-[9.5px] sm:text-xs font-black leading-tight flex items-center justify-center gap-0.5">
+                        <div className="cal-single-title font-black leading-tight flex items-center justify-center gap-0.5">
                           <span className="hidden sm:inline">{filterConfig?.emoji}</span>
                           <span className="truncate">{isFilterFolga ? 'FOLGA' : filterConfig?.nome}</span>
                         </div>
-                        <div className="text-[8.5px] sm:text-[10.5px] font-bold opacity-85 mt-0.5 leading-none">
+                        <div className="cal-single-subtitle font-bold opacity-85 mt-0.5 leading-none">
                           {isFilterFolga ? 'Descanso' : filterConfig?.horario.split(' ')[0]}
                         </div>
                       </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Users, Search, Briefcase, Plus, Trash2, Edit2, RotateCcw, Check, UserPlus } from 'lucide-react';
+import { X, Users, Search, Briefcase, Plus, Trash2, Edit2, RotateCcw, Check, UserPlus, Cloud } from 'lucide-react';
 import { Colaborador, TurmaId } from '../types';
 import { TURMAS, getTurmas } from '../data/equipes';
 
@@ -89,11 +89,17 @@ export const TeamRosterModal: React.FC<TeamRosterModalProps> = ({
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Composição das Equipes
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Composição das Equipes
+                </h2>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  <Cloud className="w-3 h-3 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                  <span>Sincronizado na Nuvem</span>
+                </span>
+              </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Gerencie e altere colaboradores entre as turmas (A, B, C e D)
+                Gerencie e altere colaboradores entre as turmas (A, B, C e D) em tempo real
               </p>
             </div>
           </div>
