@@ -18,6 +18,7 @@ import {
   Building2,
   Cloud,
   CloudCheck,
+  Edit2,
 } from 'lucide-react';
 import { Colaborador, FeriasPeriodo, TurmaId } from '../types';
 import { TURMAS } from '../data/equipes';
@@ -62,6 +63,9 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
   const [novoNome, setNovoNome] = useState<string>('');
   const [novoCargo, setNovoCargo] = useState<string>('');
   const [novoSetor, setNovoSetor] = useState<string>('Outro Setor');
+
+  // Edit mode state
+  const [editingFeriasId, setEditingFeriasId] = useState<string | null>(null);
 
   // Deletion inline confirmation state (replaces window.confirm)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -173,8 +177,9 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
       coberturaIsExternoFinal = true;
     }
 
+    const recordId = editingFeriasId || `ferias-${Date.now()}`;
     const newRecord: FeriasPeriodo = updateFeriasStatus({
-      id: `ferias-${Date.now()}`,
+      id: recordId,
       colaboradorId: selectedColaborador.id,
       colaboradorNome: selectedColaborador.nome,
       colaboradorTurma: selectedColaborador.turma,
@@ -191,23 +196,70 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
       status: 'AGENDADA',
     });
 
-    const updated = [newRecord, ...feriasList];
+    let updated: FeriasPeriodo[];
+    if (editingFeriasId) {
+      updated = feriasList.map((f) => (f.id === editingFeriasId ? newRecord : f));
+    } else {
+      updated = [newRecord, ...feriasList];
+    }
     onSaveFerias(updated);
 
     const origemTexto = coberturaIsExternoFinal ? `(${coberturaSetorFinal})` : `(Turma ${coberturaTurmaFinal})`;
-    setSuccessMessage(`Férias de ${selectedColaborador.nome} cadastradas com sucesso! Cobertura por ${coberturaNomeFinal} ${origemTexto}.`);
+    setSuccessMessage(
+      editingFeriasId
+        ? `Férias de ${selectedColaborador.nome} atualizadas com sucesso! Cobertura por ${coberturaNomeFinal} ${origemTexto}.`
+        : `Férias de ${selectedColaborador.nome} cadastradas com sucesso! Cobertura por ${coberturaNomeFinal} ${origemTexto}.`
+    );
     setObservacoes('');
     setNovoNome('');
     setNovoCargo('');
+    setEditingFeriasId(null);
     setTimeout(() => {
       setSuccessMessage('');
       setActiveTab('LISTA');
     }, 1800);
   };
 
+  const handleStartEditing = (item: FeriasPeriodo) => {
+    setEditingFeriasId(item.id);
+    setColaboradorId(item.colaboradorId);
+    setDataInicio(item.dataInicio);
+    setDataFim(item.dataFim);
+    setObservacoes(item.observacoes || '');
+
+    if (item.coberturaIsExterno || item.coberturaTurmaOrigem === 'EXTERNO') {
+      setCoberturaTipo('NOVO_EXTERNO');
+      setNovoNome(item.coberturaColaboradorNome);
+      setNovoCargo(item.coberturaCargo);
+      setNovoSetor(item.coberturaSetorOrigem || 'Outro Setor');
+      setCoberturaColaboradorId('');
+    } else {
+      setCoberturaTipo('EXISTENTE');
+      setCoberturaColaboradorId(item.coberturaColaboradorId);
+      setNovoNome('');
+      setNovoCargo('');
+    }
+
+    setFormError('');
+    setSuccessMessage('');
+    setActiveTab('CADASTRAR');
+  };
+
+  const handleCancelEditing = () => {
+    setEditingFeriasId(null);
+    setObservacoes('');
+    setNovoNome('');
+    setNovoCargo('');
+    setFormError('');
+    setActiveTab('LISTA');
+  };
+
   const handleDeleteConfirmed = (id: string, nome: string) => {
     const updated = feriasList.filter((f) => f.id !== id);
     onSaveFerias(updated);
+    if (editingFeriasId === id) {
+      setEditingFeriasId(null);
+    }
     setConfirmDeleteId(null);
     setDeleteFeedback(`O registro de férias de ${nome} foi excluído com sucesso.`);
     setTimeout(() => {
@@ -296,15 +348,31 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
             </button>
 
             <button
-              onClick={() => setActiveTab('CADASTRAR')}
+              onClick={() => {
+                if (editingFeriasId) {
+                  // Switch to register tab keeping current edit
+                  setActiveTab('CADASTRAR');
+                } else {
+                  setActiveTab('CADASTRAR');
+                }
+              }}
               className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-1.5 ${
                 activeTab === 'CADASTRAR'
                   ? 'border-amber-600 text-amber-700 dark:text-amber-400 bg-white dark:bg-slate-900'
                   : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Cadastrar Férias</span>
+              {editingFeriasId ? (
+                <>
+                  <Edit2 className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Editar Férias</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Cadastrar Férias</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -401,8 +469,8 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
                             </span>
                           </div>
 
-                          {/* Action: Excluir com confirmação inline confiável */}
-                          <div>
+                          {/* Actions: Editar e Excluir */}
+                          <div className="flex items-center gap-1.5">
                             {confirmDeleteId === item.id ? (
                               <div className="flex items-center gap-1.5 bg-red-50 dark:bg-red-950/70 p-1.5 rounded-xl border border-red-300 dark:border-red-800 animate-in fade-in">
                                 <span className="text-[11px] font-bold text-red-700 dark:text-red-300">
@@ -425,15 +493,26 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDeleteId(item.id)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 transition-all active:scale-95"
-                                title="Excluir este período de férias"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Excluir</span>
-                              </button>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEditing(item)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/60 transition-all active:scale-95"
+                                  title="Editar este período de férias"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                  <span>Editar</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteId(item.id)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 transition-all active:scale-95"
+                                  title="Excluir este período de férias"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Excluir</span>
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -493,6 +572,22 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
           ) : (
             /* Formulário de Cadastro de Férias e Cobertura */
             <form onSubmit={handleCreateFerias} className="space-y-4">
+              {editingFeriasId && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 rounded-xl flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+                  <div className="flex items-center gap-2">
+                    <Edit2 className="w-4 h-4 text-amber-600" />
+                    <span>Modo de Edição: alterando os dados do período de férias selecionado</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCancelEditing}
+                    className="font-bold underline text-amber-700 dark:text-amber-300 hover:text-amber-900"
+                  >
+                    Descartar e Voltar
+                  </button>
+                </div>
+              )}
+
               {formError && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2 text-xs text-red-700 dark:text-red-300">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -783,7 +878,7 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
               <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('LISTA')}
+                  onClick={handleCancelEditing}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancelar
@@ -793,7 +888,7 @@ export const VacationManagementModal: React.FC<VacationManagementModalProps> = (
                   className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md transition-all active:scale-95 flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Confirmar e Salvar Férias</span>
+                  <span>{editingFeriasId ? 'Salvar Alterações das Férias' : 'Confirmar e Salvar Férias'}</span>
                 </button>
               </div>
             </form>

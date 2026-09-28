@@ -13,6 +13,9 @@ import { INITIAL_FERIAS, updateFeriasListStatus } from './ferias';
 
 const COLLECTION_NAME = 'ferias';
 
+// Flag para evitar recriar seed se o usuário tiver deletado intencionalmente todos os registros
+let hasCompletedInitialSync = false;
+
 /**
  * Escuta atualizações de férias em tempo real do Firebase Firestore
  */
@@ -25,8 +28,9 @@ export function subscribeToFeriasInCloud(
   return onSnapshot(
     colRef,
     async (snapshot) => {
-      // Se a coleção estiver vazia pela primeira vez, faz a migração dos dados iniciais
-      if (snapshot.empty) {
+      // Se a coleção estiver vazia pela primeiríssima vez, faz a migração dos dados iniciais
+      if (snapshot.empty && !hasCompletedInitialSync) {
+        hasCompletedInitialSync = true;
         try {
           const localSaved = localStorage.getItem('escala_6x2_ferias');
           let seedData: FeriasPeriodo[] = INITIAL_FERIAS;
@@ -43,8 +47,11 @@ export function subscribeToFeriasInCloud(
 
           const batch = writeBatch(db);
           for (const item of seedData) {
+            const cleanItem = Object.fromEntries(
+              Object.entries(item).filter(([_, v]) => v !== undefined)
+            );
             const docRef = doc(db, COLLECTION_NAME, item.id);
-            batch.set(docRef, item);
+            batch.set(docRef, cleanItem);
           }
           await batch.commit();
           onData(updateFeriasListStatus(seedData));
@@ -53,6 +60,8 @@ export function subscribeToFeriasInCloud(
           console.error('Erro ao popular dados iniciais de férias no Firestore:', seedErr);
         }
       }
+
+      hasCompletedInitialSync = true;
 
       const list: FeriasPeriodo[] = [];
       snapshot.forEach((docSnap) => {
@@ -83,8 +92,11 @@ export function subscribeToFeriasInCloud(
  * Salva ou atualiza um registro de férias na nuvem
  */
 export async function saveFeriasToCloud(ferias: FeriasPeriodo): Promise<void> {
+  const cleanItem = Object.fromEntries(
+    Object.entries(ferias).filter(([_, v]) => v !== undefined)
+  );
   const docRef = doc(db, COLLECTION_NAME, ferias.id);
-  await setDoc(docRef, ferias, { merge: true });
+  await setDoc(docRef, cleanItem, { merge: true });
 }
 
 /**
@@ -113,9 +125,12 @@ export async function syncEntireFeriasListToCloud(list: FeriasPeriodo[]): Promis
     }
   });
 
-  // Gravar os novos/atualizados
+  // Gravar os novos/atualizados com sanitização de campos undefined
   list.forEach((item) => {
-    batch.set(doc(db, COLLECTION_NAME, item.id), item);
+    const cleanItem = Object.fromEntries(
+      Object.entries(item).filter(([_, v]) => v !== undefined)
+    );
+    batch.set(doc(db, COLLECTION_NAME, item.id), cleanItem);
   });
 
   await batch.commit();
