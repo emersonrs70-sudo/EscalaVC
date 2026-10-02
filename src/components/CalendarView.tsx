@@ -9,10 +9,11 @@ import {
   Grid3X3,
   Coffee,
 } from 'lucide-react';
-import { TurmaId, UserProfile, Colaborador, FeriasPeriodo } from '../types';
+import { TurmaId, UserProfile, Colaborador, FeriasPeriodo, Feriado } from '../types';
 import { TURNOS_CONFIG, TURMAS, COLABORADORES, getTurmas } from '../data/equipes';
 import { getDaySchedule, formatDateBR } from '../utils/escala';
 import { getFeriasForDate } from '../utils/ferias';
+import { getFeriadoForDate } from '../utils/feriados';
 
 interface CalendarViewProps {
   currentDate: Date;
@@ -25,6 +26,7 @@ interface CalendarViewProps {
   onSelectTurmaFilter?: (turma: TurmaId | 'GERAL') => void;
   colaboradores?: Colaborador[];
   feriasList?: FeriasPeriodo[];
+  feriadosList?: Feriado[];
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -38,6 +40,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onSelectTurmaFilter: controlledOnSelectFilter,
   colaboradores = COLABORADORES,
   feriasList = [],
+  feriadosList = [],
 }) => {
   const [internalTurmaFilter, setInternalTurmaFilter] = useState<TurmaId | 'GERAL'>('GERAL');
   const [mobileDisplayMode, setMobileDisplayMode] = useState<'grid' | 'list'>('grid');
@@ -261,6 +264,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <Coffee className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             <span className="font-extrabold tracking-tight">Folga</span>
           </span>
+
+          {/* Feriado: Auréola Vermelha em Destaque */}
+          <span className="flex items-center gap-1.5 shrink-0 px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-red-500 ring-2 ring-red-400/60" />
+            <span className="font-extrabold tracking-tight">Feriado</span>
+          </span>
         </div>
       </div>
 
@@ -280,6 +289,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             const dayOfWeekIdx = date.getDay();
             const schedule = getDaySchedule(date);
             const dateVacations = getFeriasForDate(date, feriasList);
+            const feriado = getFeriadoForDate(date, feriadosList);
 
             const shiftForFilter = schedule.shiftsByTurma[activeTurmaId];
             const isFilterFolga = shiftForFilter?.turno === 'FOLGA';
@@ -290,7 +300,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 key={`list-${dayNum}`}
                 onClick={() => onSelectDay(date)}
                 className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                  isToday
+                  feriado
+                    ? 'border-red-400 dark:border-red-700 bg-red-50/40 dark:bg-red-950/20 ring-1 ring-red-500/50 shadow-xs'
+                    : isToday
                     ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 ring-1 ring-blue-500/30'
                     : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
                 }`}
@@ -302,6 +314,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black ${
                         isToday
                           ? 'bg-blue-600 text-white'
+                          : feriado
+                          ? 'bg-red-600 text-white shadow-2xs'
                           : dayOfWeekIdx === 0
                           ? 'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400'
                           : dayOfWeekIdx === 6
@@ -312,11 +326,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       {dayNum}
                     </span>
                     <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
                         <span>{fullWeekDayNames[dayOfWeekIdx]}</span>
                         {isToday && (
                           <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-blue-600 text-white">
                             Hoje
+                          </span>
+                        )}
+                        {feriado && (
+                          <span className="flex items-center gap-1 text-[10px] font-black text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-950/80 px-2 py-0.5 rounded-md border border-red-300 dark:border-red-800">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                            <span className="truncate max-w-[130px]">{feriado.nome}</span>
                           </span>
                         )}
                       </div>
@@ -442,6 +462,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
               const schedule = getDaySchedule(date);
               const dateVacations = getFeriasForDate(date, feriasList);
+              const feriado = getFeriadoForDate(date, feriadosList);
+              const isFeriado = !!feriado;
 
               // Variáveis para filtro de turma única
               const shiftForFilter = schedule.shiftsByTurma[activeTurmaId];
@@ -453,23 +475,37 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   key={dayNum}
                   onClick={() => onSelectDay(date)}
                   className={`calendar-day-cell min-h-[64px] sm:min-h-[105px] lg:min-h-[118px] p-1 sm:p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex flex-col justify-between group select-none ${
-                    isToday
+                    isFeriado
+                      ? `cal-feriado-cell ${isToday ? 'cal-is-today' : ''}`
+                      : isToday
                       ? 'border-blue-500 dark:border-blue-400 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/30 shadow-xs'
                       : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
                   }`}
                 >
-                  {/* Topo da Célula: Número do Dia + Turma em Folga Evidenciada + Férias */}
+                  {/* Topo da Célula: Número do Dia + Turma em Folga Evidenciada + Férias + Feriado */}
                   <div className="cal-cell-header">
                     <div className="flex items-center gap-1 min-w-0">
                       <span
                         className={`cal-day-num transition-colors ${
                           isToday
                             ? 'cal-today-badge bg-blue-600 text-white flex items-center justify-center shadow-2xs'
+                            : isFeriado
+                            ? 'font-black text-red-600 dark:text-red-400'
                             : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                         }`}
                       >
                         {dayNum}
                       </span>
+
+                      {isFeriado && (
+                        <span
+                          className="cal-feriado-tag"
+                          title={`${feriado.nome} (${feriado.tipo === 'NACIONAL' ? 'Feriado Nacional' : feriado.tipo === 'MUNICIPAL' ? 'Feriado Municipal' : feriado.tipo})`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                          <span className="truncate max-w-[50px] sm:max-w-[70px]">{feriado.nome}</span>
+                        </span>
+                      )}
 
                       {dateVacations.length > 0 && (
                         <span

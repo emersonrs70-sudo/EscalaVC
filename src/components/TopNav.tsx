@@ -11,6 +11,7 @@ interface TopNavProps {
   activeVacationsCount: number;
   selectedTurmaFilter: TurmaId | 'GERAL';
   onSelectTurmaFilter: (turma: TurmaId | 'GERAL') => void;
+  onOpenHolidays?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -21,6 +22,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   activeVacationsCount,
   selectedTurmaFilter,
   onSelectTurmaFilter,
+  onOpenHolidays,
 }) => {
   const turmaInfo = user?.turma ? TURMAS[user.turma] : null;
 
@@ -82,8 +84,20 @@ export const TopNav: React.FC<TopNavProps> = ({
           })}
         </div>
 
-        {/* Right: Quick Actions (Férias badge + User status) */}
+        {/* Right: Quick Actions (Feriados + Férias + User status) */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Feriados Button */}
+          {onOpenHolidays && (
+            <button
+              onClick={onOpenHolidays}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-red-900 dark:text-red-200 bg-red-50 dark:bg-red-950/50 border border-red-200/80 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/60 transition-all active:scale-95 shadow-2xs"
+              title="Feriados Nacionais e Municipais"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+              <span className="hidden sm:inline">Feriados</span>
+            </button>
+          )}
+
           {/* Férias Button */}
           <button
             onClick={onOpenVacations}

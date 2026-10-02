@@ -7,10 +7,11 @@ import { CalendarView } from './components/CalendarView';
 import { DayDetailsModal } from './components/DayDetailsModal';
 import { TeamRosterModal } from './components/TeamRosterModal';
 import { VacationManagementModal } from './components/VacationManagementModal';
+import { HolidaysModal } from './components/HolidaysModal';
 import { NotificationSettings } from './components/NotificationSettings';
 import { TodayShiftSummary } from './components/TodayShiftSummary';
 import { InstallPWAModal } from './components/InstallPWAModal';
-import { Colaborador, UserProfile, TurmaId, FeriasPeriodo } from './types';
+import { Colaborador, UserProfile, TurmaId, FeriasPeriodo, Feriado } from './types';
 import { COLABORADORES } from './data/equipes';
 import { checkAndSendScheduledNotifications } from './utils/notifications';
 import { getSavedFerias, saveFeriasToStorage, updateFeriasListStatus } from './utils/ferias';
@@ -21,6 +22,12 @@ import {
   deleteColaboradorFromCloud,
   syncEntireColaboradoresListToCloud,
 } from './utils/colaboradoresCloud';
+import { getSavedFeriados, saveFeriadosToStorage } from './utils/feriados';
+import {
+  subscribeToFeriadosInCloud,
+  saveFeriadoToCloud,
+  deleteFeriadoFromCloud,
+} from './utils/feriadosCloud';
 
 export default function App() {
   const today = new Date();
@@ -219,7 +226,25 @@ export default function App() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
+  const [isHolidaysModalOpen, setIsHolidaysModalOpen] = useState(false);
   const [selectedDateModal, setSelectedDateModal] = useState<Date | null>(null);
+
+  // Feriados (Nacionais, Estaduais e Municipais) com Firestore em tempo real + cache local
+  const [feriadosList, setFeriadosList] = useState<Feriado[]>(getSavedFeriados);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToFeriadosInCloud(
+      (cloudData) => {
+        setFeriadosList(cloudData);
+        saveFeriadosToStorage(cloudData);
+      },
+      (err) => {
+        console.warn('Operando com feriados em cache local:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   // Vacations (Férias) state synced with Firestore in real-time
   const [feriasList, setFeriasList] = useState<FeriasPeriodo[]>(() => {
@@ -299,6 +324,7 @@ export default function App() {
         onLogout={handleLogout}
         onOpenTeams={() => setIsTeamsOpen(true)}
         onOpenVacations={() => setIsVacationModalOpen(true)}
+        onOpenHolidays={() => setIsHolidaysModalOpen(true)}
         activeVacationsCount={activeVacationsCount}
         onOpenNotifications={() => setIsNotificationOpen(true)}
         onOpenInstall={() => setIsInstallModalOpen(true)}
@@ -320,6 +346,7 @@ export default function App() {
           user={user}
           onOpenLogin={() => setIsLoginOpen(true)}
           onOpenVacations={() => setIsVacationModalOpen(true)}
+          onOpenHolidays={() => setIsHolidaysModalOpen(true)}
           activeVacationsCount={activeVacationsCount}
           selectedTurmaFilter={selectedTurmaFilter}
           onSelectTurmaFilter={handleSelectTurmaFilter}
@@ -341,6 +368,7 @@ export default function App() {
                 onSelectTurmaFilter={handleSelectTurmaFilter}
                 colaboradores={colaboradores}
                 feriasList={feriasList}
+                feriadosList={feriadosList}
               />
             </div>
 
@@ -412,6 +440,45 @@ export default function App() {
         user={user}
         colaboradores={colaboradores}
         feriasList={feriasList}
+        feriadosList={feriadosList}
+      />
+
+      <HolidaysModal
+        isOpen={isHolidaysModalOpen}
+        onClose={() => setIsHolidaysModalOpen(false)}
+        feriadosList={feriadosList}
+        selectedYear={selectedYear}
+        onSaveFeriado={async (f) => {
+          setFeriadosList((prev) => {
+            const idx = prev.findIndex((x) => x.id === f.id);
+            let updated: Feriado[];
+            if (idx >= 0) {
+              updated = [...prev];
+              updated[idx] = f;
+            } else {
+              updated = [...prev, f];
+            }
+            saveFeriadosToStorage(updated);
+            return updated;
+          });
+          try {
+            await saveFeriadoToCloud(f);
+          } catch (e) {
+            console.error('Erro ao sincronizar feriado na nuvem:', e);
+          }
+        }}
+        onDeleteFeriado={async (id) => {
+          setFeriadosList((prev) => {
+            const updated = prev.filter((x) => x.id !== id);
+            saveFeriadosToStorage(updated);
+            return updated;
+          });
+          try {
+            await deleteFeriadoFromCloud(id);
+          } catch (e) {
+            console.error('Erro ao excluir feriado da nuvem:', e);
+          }
+        }}
       />
 
       <TeamRosterModal

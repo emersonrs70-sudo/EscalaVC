@@ -61,3 +61,14 @@ export interface FeriasPeriodo {
   observacoes?: string;
   status: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA';
 }
+
+export type FeriadoTipo = 'NACIONAL' | 'MUNICIPAL' | 'ESTADUAL' | 'FACULTATIVO';
+
+export interface Feriado {
+  id: string;
+  data: string; // YYYY-MM-DD
+  nome: string;
+  tipo: FeriadoTipo;
+  descricao?: string;
+  municipio?: string;
+}

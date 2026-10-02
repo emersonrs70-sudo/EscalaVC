@@ -12,11 +12,13 @@ import {
   Share2,
   Palmtree,
   ArrowRight,
+  Sparkles,
 } from 'lucide-react';
-import { TurmaId, UserProfile, Turno, Colaborador, FeriasPeriodo } from '../types';
+import { TurmaId, UserProfile, Turno, Colaborador, FeriasPeriodo, Feriado } from '../types';
 import { TURNOS_CONFIG, TURMAS, COLABORADORES, getTurmas } from '../data/equipes';
 import { formatFullDateBR, getDaySchedule, generateGoogleCalendarUrl } from '../utils/escala';
 import { getFeriasForDate } from '../utils/ferias';
+import { getFeriadoForDate } from '../utils/feriados';
 
 interface DayDetailsModalProps {
   selectedDate: Date | null;
@@ -24,6 +26,7 @@ interface DayDetailsModalProps {
   user: UserProfile | null;
   colaboradores?: Colaborador[];
   feriasList?: FeriasPeriodo[];
+  feriadosList?: Feriado[];
 }
 
 export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
@@ -32,6 +35,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
   user,
   colaboradores = COLABORADORES,
   feriasList = [],
+  feriadosList = [],
 }) => {
   const [expandedTurno, setExpandedTurno] = useState<Turno | null>(null);
 
@@ -40,6 +44,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
   const schedule = getDaySchedule(selectedDate);
   const turmasMap = getTurmas(colaboradores);
   const dayVacations = getFeriasForDate(selectedDate, feriasList);
+  const feriado = getFeriadoForDate(selectedDate, feriadosList);
 
   const turnosList: { turno: Turno; label: string }[] = [
     { turno: 'MANHA', label: 'Manhã' },
@@ -57,13 +62,21 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
         {/* Modal Header */}
         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
               <CalendarIcon className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 capitalize">
-                {formatFullDateBR(selectedDate)}
-              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 capitalize">
+                  {formatFullDateBR(selectedDate)}
+                </h2>
+                {feriado && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    <span>Feriado {feriado.tipo === 'NACIONAL' ? 'Nacional' : feriado.tipo === 'MUNICIPAL' ? 'Municipal' : feriado.tipo}</span>
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Detalhamento dos turnos e equipes escaladas
               </p>
@@ -80,6 +93,54 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
 
         {/* Shift Details List */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+          {/* Destaque Exclusivo do Feriado */}
+          {feriado && (
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-red-50 via-rose-50/70 to-red-50/40 dark:from-red-950/80 dark:via-rose-950/60 dark:to-red-950/40 border-2 border-red-400 dark:border-red-600 shadow-sm space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center font-black shadow-xs shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-red-600 dark:text-red-400 block">
+                      {feriado.tipo === 'NACIONAL'
+                        ? '🔴 Feriado Nacional Oficial'
+                        : feriado.tipo === 'MUNICIPAL'
+                        ? '🏛️ Feriado Municipal'
+                        : feriado.tipo === 'ESTADUAL'
+                        ? '🚩 Feriado Estadual'
+                        : '📅 Ponto Facultativo'}
+                    </span>
+                    <h3 className="text-sm sm:text-base font-black text-red-950 dark:text-red-100 leading-tight">
+                      {feriado.nome}
+                    </h3>
+                  </div>
+                </div>
+
+                <span className="text-[10px] font-black bg-red-200/90 dark:bg-red-900 text-red-900 dark:text-red-100 px-2.5 py-1 rounded-full border border-red-300 dark:border-red-700 shrink-0">
+                  Data Festiva
+                </span>
+              </div>
+
+              {feriado.descricao && (
+                <p className="text-xs text-red-900/85 dark:text-red-200/90 font-medium pl-10">
+                  {feriado.descricao}
+                </p>
+              )}
+
+              {feriado.municipio && (
+                <div className="pl-10 text-[11px] font-bold text-red-800 dark:text-red-300">
+                  Município: {feriado.municipio}
+                </div>
+              )}
+
+              <div className="pl-10 pt-1.5 text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1.5 border-t border-red-200/70 dark:border-red-900/60">
+                <span className="font-extrabold text-red-800 dark:text-red-300">Aviso Operacional:</span>
+                <span>Regime 6x2 ininterrupto mantém os turnos conforme escala.</span>
+              </div>
+            </div>
+          )}
+
           {/* Vacation Banner on this date */}
           {dayVacations.length > 0 && (
             <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-300 dark:border-amber-800 space-y-2 shadow-2xs">
