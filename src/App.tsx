@@ -8,6 +8,7 @@ import { DayDetailsModal } from './components/DayDetailsModal';
 import { TeamRosterModal } from './components/TeamRosterModal';
 import { VacationManagementModal } from './components/VacationManagementModal';
 import { HolidaysModal } from './components/HolidaysModal';
+import { ExportPdfModal } from './components/ExportPdfModal';
 import { NotificationSettings } from './components/NotificationSettings';
 import { TodayShiftSummary } from './components/TodayShiftSummary';
 import { InstallPWAModal } from './components/InstallPWAModal';
@@ -227,6 +228,7 @@ export default function App() {
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
   const [isHolidaysModalOpen, setIsHolidaysModalOpen] = useState(false);
+  const [isExportPdfOpen, setIsExportPdfOpen] = useState(false);
   const [selectedDateModal, setSelectedDateModal] = useState<Date | null>(null);
 
   // Feriados (Nacionais, Estaduais e Municipais) com Firestore em tempo real + cache local
@@ -325,6 +327,7 @@ export default function App() {
         onOpenTeams={() => setIsTeamsOpen(true)}
         onOpenVacations={() => setIsVacationModalOpen(true)}
         onOpenHolidays={() => setIsHolidaysModalOpen(true)}
+        onOpenExportPdf={() => setIsExportPdfOpen(true)}
         activeVacationsCount={activeVacationsCount}
         onOpenNotifications={() => setIsNotificationOpen(true)}
         onOpenInstall={() => setIsInstallModalOpen(true)}
@@ -347,6 +350,7 @@ export default function App() {
           onOpenLogin={() => setIsLoginOpen(true)}
           onOpenVacations={() => setIsVacationModalOpen(true)}
           onOpenHolidays={() => setIsHolidaysModalOpen(true)}
+          onOpenExportPdf={() => setIsExportPdfOpen(true)}
           activeVacationsCount={activeVacationsCount}
           selectedTurmaFilter={selectedTurmaFilter}
           onSelectTurmaFilter={handleSelectTurmaFilter}
@@ -366,6 +370,7 @@ export default function App() {
                 user={user}
                 selectedTurmaFilter={selectedTurmaFilter}
                 onSelectTurmaFilter={handleSelectTurmaFilter}
+                onOpenExportPdf={() => setIsExportPdfOpen(true)}
                 colaboradores={colaboradores}
                 feriasList={feriasList}
                 feriadosList={feriadosList}
@@ -383,8 +388,10 @@ export default function App() {
                   onOpenLogin={() => setIsLoginOpen(true)}
                   onOpenNotifications={() => setIsNotificationOpen(true)}
                   onOpenVacations={() => setIsVacationModalOpen(true)}
+                  onOpenExportPdf={() => setIsExportPdfOpen(true)}
                   colaboradores={colaboradores}
                   feriasList={feriasList}
+                  feriadosList={feriadosList}
                 />
               ) : (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between gap-3">
@@ -510,6 +517,17 @@ export default function App() {
       <InstallPWAModal
         isOpen={isInstallModalOpen}
         onClose={() => setIsInstallModalOpen(false)}
+      />
+
+      <ExportPdfModal
+        isOpen={isExportPdfOpen}
+        onClose={() => setIsExportPdfOpen(false)}
+        initialMonth={selectedMonth}
+        initialYear={selectedYear}
+        initialTurmaFilter={selectedTurmaFilter}
+        colaboradores={colaboradores}
+        feriasList={feriasList}
+        feriadosList={feriadosList}
       />
     </div>
   );

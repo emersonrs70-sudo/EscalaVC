@@ -8,6 +8,7 @@ import {
   List,
   Grid3X3,
   Coffee,
+  FileText,
 } from 'lucide-react';
 import { TurmaId, UserProfile, Colaborador, FeriasPeriodo, Feriado } from '../types';
 import { TURNOS_CONFIG, TURMAS, COLABORADORES, getTurmas } from '../data/equipes';
@@ -24,6 +25,7 @@ interface CalendarViewProps {
   user: UserProfile | null;
   selectedTurmaFilter?: TurmaId | 'GERAL';
   onSelectTurmaFilter?: (turma: TurmaId | 'GERAL') => void;
+  onOpenExportPdf?: () => void;
   colaboradores?: Colaborador[];
   feriasList?: FeriasPeriodo[];
   feriadosList?: Feriado[];
@@ -38,6 +40,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   user,
   selectedTurmaFilter: controlledFilter,
   onSelectTurmaFilter: controlledOnSelectFilter,
+  onOpenExportPdf,
   colaboradores = COLABORADORES,
   feriasList = [],
   feriadosList = [],
@@ -191,6 +194,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Botão Exportar PDF */}
+          {onOpenExportPdf && (
+            <button
+              onClick={onOpenExportPdf}
+              className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs"
+              title="Baixar escala deste mês em PDF"
+            >
+              <FileText className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+              <span className="hidden sm:inline">Baixar PDF</span>
+            </button>
+          )}
         </div>
       </div>
 

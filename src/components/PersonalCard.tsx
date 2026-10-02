@@ -16,11 +16,11 @@ import {
   Check,
   Palmtree,
   ArrowRight,
+  FileText,
 } from 'lucide-react';
-import { UserProfile, Colaborador, FeriasPeriodo } from '../types';
+import { UserProfile, Colaborador, FeriasPeriodo, Feriado } from '../types';
 import { TURNOS_CONFIG, TURMAS, COLABORADORES, getTurmas } from '../data/equipes';
 import {
-  downloadIcsFile,
   formatDateBR,
   formatFullDateBR,
   getDaySchedule,
@@ -28,6 +28,7 @@ import {
   generateGoogleCalendarUrl,
 } from '../utils/escala';
 import { parseIsoDate } from '../utils/ferias';
+import { generateEscalaPDF } from '../utils/pdfGenerator';
 
 interface PersonalCardProps {
   user: UserProfile;
@@ -36,8 +37,10 @@ interface PersonalCardProps {
   onOpenLogin: () => void;
   onOpenNotifications: () => void;
   onOpenVacations?: () => void;
+  onOpenExportPdf?: () => void;
   colaboradores?: Colaborador[];
   feriasList?: FeriasPeriodo[];
+  feriadosList?: Feriado[];
 }
 
 export const PersonalCard: React.FC<PersonalCardProps> = ({
@@ -47,8 +50,10 @@ export const PersonalCard: React.FC<PersonalCardProps> = ({
   onOpenLogin,
   onOpenNotifications,
   onOpenVacations,
+  onOpenExportPdf,
   colaboradores = COLABORADORES,
   feriasList = [],
+  feriadosList = [],
 }) => {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
@@ -77,8 +82,19 @@ export const PersonalCard: React.FC<PersonalCardProps> = ({
 
   const shiftConfig = TURNOS_CONFIG[myShiftToday.turno];
 
-  const handleDownloadIcs = () => {
-    downloadIcsFile(user.turma, selectedMonth, selectedYear, user.nome);
+  const handleDownloadPdf = () => {
+    if (onOpenExportPdf) {
+      onOpenExportPdf();
+      return;
+    }
+    generateEscalaPDF({
+      month: selectedMonth,
+      year: selectedYear,
+      turmaFilter: user.turma,
+      colaboradores,
+      feriasList,
+      feriadosList,
+    });
     setDownloadSuccess(true);
     setTimeout(() => setDownloadSuccess(false), 3000);
   };
@@ -288,26 +304,26 @@ export const PersonalCard: React.FC<PersonalCardProps> = ({
 
       {/* Action Footer Bar */}
       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-          <CalendarIcon className="w-4 h-4 text-blue-500" />
-          <span>Sincronizar escala completa da Turma {user.turma}:</span>
+        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+          <FileText className="w-4 h-4 text-red-500" />
+          <span>Escala impressa da Turma {user.turma}:</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={handleDownloadIcs}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold transition-all"
-            title="Baixar arquivo .ics para Google Calendar/iCal/Outlook"
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 font-bold transition-all shadow-2xs active:scale-95"
+            title="Baixar escala completa deste mês em arquivo PDF oficial"
           >
             {downloadSuccess ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-emerald-600">Baixado .ics</span>
+                <span className="text-emerald-600">PDF Gerado!</span>
               </>
             ) : (
               <>
-                <Download className="w-3.5 h-3.5 text-blue-500" />
-                <span>Baixar .ICS (Google Agenda)</span>
+                <Download className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                <span>Baixar PDF (Turma {user.turma})</span>
               </>
             )}
           </button>

@@ -15,6 +15,7 @@ import {
   PanelLeftOpen,
   Filter,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import { UserProfile, TurmaId } from '../types';
 import { TURMAS } from '../data/equipes';
@@ -37,6 +38,7 @@ interface SidebarProps {
   selectedTurmaFilter: TurmaId | 'GERAL';
   onSelectTurmaFilter: (turma: TurmaId | 'GERAL') => void;
   onOpenHolidays?: () => void;
+  onOpenExportPdf?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -57,6 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   selectedTurmaFilter,
   onSelectTurmaFilter,
   onOpenHolidays,
+  onOpenExportPdf,
 }) => {
   const turmaInfo = user?.turma ? TURMAS[user.turma] : null;
 
@@ -260,6 +263,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </span>
                   </div>
                 )}
+              </button>
+            )}
+
+            {/* Baixar Escala em PDF */}
+            {onOpenExportPdf && (
+              <button
+                onClick={() => {
+                  onOpenExportPdf();
+                  if (window.innerWidth < 1024) onCloseMobile();
+                }}
+                className="w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-800 dark:hover:text-red-200 transition-colors"
+                title="Baixar escala mensal em PDF oficial"
+              >
+                <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4" />
+                </div>
+                {isExpanded && <span className="truncate">Baixar PDF da Escala</span>}
               </button>
             )}
 

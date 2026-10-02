@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Palmtree, User, Sparkles } from 'lucide-react';
+import { Menu, Palmtree, User, Sparkles, FileText } from 'lucide-react';
 import { UserProfile, TurmaId } from '../types';
 import { TURMAS } from '../data/equipes';
 
@@ -12,6 +12,7 @@ interface TopNavProps {
   selectedTurmaFilter: TurmaId | 'GERAL';
   onSelectTurmaFilter: (turma: TurmaId | 'GERAL') => void;
   onOpenHolidays?: () => void;
+  onOpenExportPdf?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -23,6 +24,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   selectedTurmaFilter,
   onSelectTurmaFilter,
   onOpenHolidays,
+  onOpenExportPdf,
 }) => {
   const turmaInfo = user?.turma ? TURMAS[user.turma] : null;
 
@@ -112,6 +114,18 @@ export const TopNav: React.FC<TopNavProps> = ({
               </span>
             )}
           </button>
+
+          {/* PDF Export Button */}
+          {onOpenExportPdf && (
+            <button
+              onClick={onOpenExportPdf}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shadow-2xs"
+              title="Baixar escala em PDF"
+            >
+              <FileText className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+              <span className="hidden md:inline">PDF</span>
+            </button>
+          )}
 
           {/* User Button */}
           {user && !user.modoAnonimo ? (
